@@ -8,9 +8,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class MainActivity extends AppCompatActivity {
     private TextView tv;
     private UIHandler handler;
+    private Timer timer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
 
         tv = (TextView)findViewById(R.id.tv);
         handler = new UIHandler();
-
+        timer = new Timer();
     }
 
     public void test1(View v){
@@ -28,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void test2(View v){
+        MyTask mt1 = new MyTask();
+        timer.schedule(mt1, 200, 200);
     }
 
     private class Thread1 extends Thread {
@@ -36,7 +42,14 @@ public class MainActivity extends AppCompatActivity {
             for (int i=0; i<10; i++){
                 Log.d("brad", "i=" + i);
                 //tv.setText("i=" + i);
-                handler.sendEmptyMessage(i);
+//                handler.sendEmptyMessage(i);
+
+                Message mesg = new Message();
+                Bundle data = new Bundle();
+                data.putInt("i", i);
+                mesg.setData(data);
+                handler.sendMessage(mesg);
+
                 try {
                     Thread.sleep(200);
                 } catch (InterruptedException e) {
@@ -45,11 +58,27 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private class MyTask extends TimerTask {
+        private int i;
+        @Override
+        public void run() {
+            Log.d("brad", "i = " + i++);
+            Message mesg = new Message();
+            Bundle data = new Bundle();
+            data.putInt("i", i);
+            mesg.setData(data);
+            handler.sendMessage(mesg);
+        }
+    }
+
     private class UIHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            tv.setText("i = " + msg.what);
+
+            Bundle data = msg.getData();
+            int i = data.getInt("i");
+            tv.setText("i = " + i);
 
         }
     }
